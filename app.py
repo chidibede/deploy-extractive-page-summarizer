@@ -5,6 +5,7 @@ as a web app and an api endpoint
 import re
 import nltk
 from nltk.tokenize import sent_tokenize
+from nltk.corpus import stopwords
 from flask import Flask, render_template, request, jsonify
 from bs4 import BeautifulSoup
 import requests
