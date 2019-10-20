@@ -10,7 +10,6 @@ from bs4 import BeautifulSoup
 import requests
 from pandas.io.json import json_normalize
 import summarizer
-nltk.download('punkt')
 
 app = Flask(__name__)
 
