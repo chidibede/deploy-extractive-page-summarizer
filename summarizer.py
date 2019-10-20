@@ -7,6 +7,7 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 nltk.download('stopwords')
+nltk.download('punkt')
 
 def generate_frequency_table(text):
     ''' This functions creates a frequency
