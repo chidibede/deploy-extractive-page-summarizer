@@ -3,6 +3,7 @@ An Extractive text summarizer that uses
 the importance and frequency of a word to summarize
 
 '''
+import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
