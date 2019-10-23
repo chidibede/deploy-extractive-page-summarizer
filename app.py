@@ -10,12 +10,20 @@ from flask import Flask, render_template, request, jsonify
 from bs4 import BeautifulSoup
 import requests
 from pandas.io.json import json_normalize
-import summarizer
+from gensim.summarization import summarize
+from urllib.request import urlopen
+
 
 nltk.download('stopwords')
 nltk.download('punkt')
 
 app = Flask(__name__)
+
+def get_url_text(url):
+    page = urlopen(url)
+    soup = BeautifulSoup(page, "lxml")
+    text = " ".join(map(lambda p: p.text, soup.find_all('p')))
+    return text
 
 @app.route('/')
 def home():
@@ -45,12 +53,12 @@ def summarized_article():
     text_string = [x for x in request.form.values()]
     for texts in text_string:
         text = texts.lower()
-    text = re.sub("[^a-zA-Z.,]", " ", text)
-    freq_table = summarizer.generate_frequency_table(text)
-    sentences = sent_tokenize(text)
-    sentence_scores = summarizer.rank_sentences(sentences, freq_table)
-    threshold = summarizer.calc_average_rank(sentence_scores)
-    summary = summarizer.summarize(sentences, sentence_scores, 1.3 * threshold)
+    
+    
+    if len(text) > 1000:
+        summary = summarize(text, ratio=0.1)
+    else:
+        summary = summarize(text, ratio=0.2)
     return render_template('summarized_url.html', summary=summary)
 
 @app.route('/summarized_url', methods=['POST'])
@@ -61,23 +69,18 @@ def summarized_url():
     and document frequencies and then ranks them as
     important terms which is used as a summary
     '''
-    text_array = []
+    
     url_string = [x for x in request.form.values()]
     for urls in url_string:
         url = urls.lower()
-    source = requests.get(url).text
-    soup = BeautifulSoup(source, 'lxml')
-    for paragraph in soup.find_all('p'):
-        paragraph = paragraph.text
-        text_array.append(paragraph)
-    text = " ".join(text_array)
-    text = re.sub("[^a-zA-Z.,]", " ", text)
-
-    freq_table = summarizer.generate_frequency_table(text)
-    sentences = sent_tokenize(text)
-    sentence_scores = summarizer.rank_sentences(sentences, freq_table)
-    threshold = summarizer.calc_average_rank(sentence_scores)
-    summary = summarizer.summarize(sentences, sentence_scores, 1.3 * threshold)
+    
+    text = get_url_text(url)
+    
+    if len(text) > 800:
+        summary = summarize(text, ratio=0.1)
+    else:
+        summary = summarize(text, ratio=0.2)
+    
     return render_template('summarized_url.html', summary=summary)
 
 
@@ -94,13 +97,12 @@ def summarized_article_api():
     json_df = json_normalize(json_data)
     for texts in json_df.text:
         text = texts.lower()
-    text = re.sub("[^a-zA-Z0-9.,]", " ", text)
+    text = re.sub("[^a-zA-Z0-9.]", " ", text)
 
-    freq_table = summarizer.generate_frequency_table(text)
-    sentences = sent_tokenize(text)
-    sentence_scores = summarizer.rank_sentences(sentences, freq_table)
-    threshold = summarizer.calc_average_rank(sentence_scores)
-    summary = summarizer.summarize(sentences, sentence_scores, 1.3 * threshold)
+    if len(text) > 800:
+        summary = summarize(text, ratio=0.1)
+    else:
+        summary = summarize(text, ratio=0.2)
     return jsonify(summary)
 
 
@@ -125,13 +127,11 @@ def summarized_url_api():
         paragraph = paragraph.text
         text_array.append(paragraph)
     text = " ".join(text_array)
-    text = re.sub("[^a-zA-Z0-9.,]", " ", text)
 
-    freq_table = summarizer.generate_frequency_table(text)
-    sentences = sent_tokenize(text)
-    sentence_scores = summarizer.rank_sentences(sentences, freq_table)
-    threshold = summarizer.calc_average_rank(sentence_scores)
-    summary = summarizer.summarize(sentences, sentence_scores, 1.3 * threshold)
+    if len(text) > 800:
+        summary = summarize(text, ratio=0.1)
+    else:
+        summary = summarize(text, ratio=0.2)
     return jsonify(summary)
 
 if __name__ == "__main__":
